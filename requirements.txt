@@ -1,0 +1,5 @@
+angr==9.2.54
+archinfo==9.2.54
+claripy==9.2.54
+colorama==0.4.6
+pwntools==4.10.0
