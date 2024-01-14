@@ -39,19 +39,8 @@ class SscanfHook(angr.SimProcedure):
         self,
         s,
         format_string,
-        arg0,
-        arg1,
-        arg2,
-        arg3,
-        arg4,
-        arg5,
-        arg6,
-        arg7,
-        arg8,
-        arg9,
     ) -> int:
-        args = [arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9]
-
+ 
         format_string = self.state.memory.load(format_string, 0x100)
         format_string = self.state.solver.eval(format_string, cast_to=bytes)
         format_string = format_string.split(b"\x00")[0].decode()
@@ -64,22 +53,25 @@ class SscanfHook(angr.SimProcedure):
         for i, fmt in enumerate(formats):
             if fmt == "%d":
                 answer = claripy.BVS(f"answer_sscanf_{i}", 32)
-                self.state.memory.store(args[i], answer, endness=archinfo.Endness.LE)
+                addr = self.project.factory.cc().next_arg(self.arg_session, angr.types.parse_type("int*", arch=self.arch)).get_value(self.state)
+                self.state.memory.store(addr, answer, endness=archinfo.Endness.LE)
             elif fmt == "%s":
                 answer = claripy.BVS(f"answer_sscanf_{i}", 8 * ANSWER_STRING_MAXLEN)
-                self.state.memory.store(args[i], answer)
+                addr = self.project.factory.cc().next_arg(self.arg_session, angr.types.parse_type("char**", arch=self.arch)).get_value(self.state)
+                self.state.memory.store(addr, answer)
             elif fmt == "%c":
                 answer = claripy.BVS(f"answer_sscanf_{i}", 8)
                 self.state.add_constraints(
                     claripy.Or(
                         claripy.And(
-                            claripy.UGT(answer, 0x20),
-                            claripy.ULT(answer, 0x7F),
+                            answer >= 0x20,
+                            answer < 0x7F
                         ),
-                        claripy.ULE(answer, 0),
+                        answer == 0x00
                     )
                 )
-                self.state.memory.store(args[i], answer)
+                addr = self.project.factory.cc().next_arg(self.arg_session, angr.types.parse_type("char*", arch=self.arch)).get_value(self.state)
+                self.state.memory.store(addr, answer)
             else:
                 raise Exception(f"format not implemented: {fmt}")
 
@@ -113,16 +105,10 @@ class QwoqSolver:
     def get_answer(self, phase) -> str | Any | None:
         proj = angr.Project(self.target_path, auto_load_libs=False)
 
-        proj.hook(
-            proj.loader.find_symbol("strings_not_equal").rebased_addr,
-            StringNotEqualHook(),
-        )
-        proj.hook(
-            proj.loader.find_symbol("string_length").rebased_addr,
-            angr.SIM_PROCEDURES["libc"]["strlen"](),
-        )
-        proj.hook(proj.loader.find_symbol("read_line").rebased_addr, NopHook())
-        proj.hook(proj.loader.find_symbol("phase_defused").rebased_addr, NopHook())
+        proj.hook_symbol("strings_not_equal", StringNotEqualHook())
+        proj.hook_symbol("string_length", angr.SIM_PROCEDURES["libc"]["strlen"]())
+        proj.hook_symbol("read_line", NopHook())
+        proj.hook_symbol("phase_defused", NopHook())
         proj.hook_symbol("__isoc99_sscanf", SscanfHook())
         proj.hook_symbol("strtol", StrtolHook())
 
@@ -141,14 +127,14 @@ class QwoqSolver:
         initial_state.memory.store(answer_str_addr, answer_str)
 
         for i in range(self.ANSWER_STRING_MAXLEN):
-            answer_ch = initial_state.memory.load(answer_str_addr + i, 1)
+            answer_ch = initial_state.mem[answer_str_addr + i].byte.resolved
             initial_state.add_constraints(
                 claripy.Or(
                     claripy.And(
-                        claripy.UGE(answer_ch, 0x20),
-                        claripy.ULT(answer_ch, 0x7F),
+                        answer_ch >= 0x20,
+                        answer_ch < 0x7F
                     ),
-                    claripy.ULE(answer_ch, 0),
+                    answer_ch == 0x00
                 )
             )
 
@@ -156,7 +142,6 @@ class QwoqSolver:
         initial_state.globals["ANSWER_STRING_MAXLEN"] = self.ANSWER_STRING_MAXLEN
 
         initial_state.stack_push(self.RET_ADDR)
-        # initial_state.mem[initial_state.regs.rsp].uint64_t = self.RET_ADDR
 
         simgr = proj.factory.simgr(initial_state)
         simgr.explore(
