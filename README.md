@@ -16,6 +16,14 @@ Binary bomb can be simulated, and solutions could be found by [symbolic executio
 We used [`angr`](https://angr.io/) - one of the powerful binary analysis tools - to track and solve for variables, simulate the status of bomb.
 
 ---
+
+**2025-10-15 Update**:
+Thanks to [@minsusun](https://github.com/minsusun) for pointing out necessary function to be patched!
+
+Now we "manage" packages. Use `uv`.
+*~~I didn't know what the package manager and why it is important when I first coded this 3 years ago~~*
+
+---
 ## Usage
 `python qwoqLab.py [OPTIONS] bomb`
 ```text
@@ -29,13 +37,4 @@ options:
 -D, -d, --defuse            Defuse every stage (-S 1 2 3 4 5 6 7)
 -A, -a, --answer            Write answer to text file (Every phase should solved)
 -F, -f, --full              Do everything! (-L -D -A)
-```
-
-## Requirements
-```text
-angr==9.2.54
-archinfo==9.2.54
-claripy==9.2.54
-colorama==0.4.6
-pwntools==4.10.0
 ```

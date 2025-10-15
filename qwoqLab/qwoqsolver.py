@@ -84,7 +84,7 @@ class SscanfHook(angr.SimProcedure):
 
 
 class StrtolHook(angr.SimProcedure):
-    def run(self) -> claripy.Bits:
+    def run(self) -> claripy.BVS:
         answer = claripy.BVS("answer_strtol", 64)
         self.state.globals["answer_strtol"] = (answer,)
         return answer

@@ -18,7 +18,8 @@ def print_title() -> None:
 ┃       $$ |                              $$ |                              ┃
 ┃       \__|                              \__|                              ┃
 ┃                                       Bomblab automated reverse by Aplace ┃
-┃                                                special thanks to n1net4il ┃                    
+┃                                                special thanks to n1net4il ┃
+┃                                                                  minsusun ┃                    
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 """
 

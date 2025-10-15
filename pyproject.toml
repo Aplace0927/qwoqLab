@@ -1,0 +1,12 @@
+[project]
+name = "qwoqlab"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "angr>=9.2.179",
+    "archinfo>=9.2.179",
+    "colorama>=0.4.6",
+    "pwntools>=4.15.0",
+]
