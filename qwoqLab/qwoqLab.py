@@ -78,6 +78,7 @@ if __name__ == "__main__":
             [
                 "initialize_bomb",
                 "explode_bomb",
+                "send_msg",
             ],
         )
 
